@@ -18,6 +18,12 @@ const UserData = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [userList, setUserList] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [input, setInput] = useState({
+    name: "",
+    countryId: 0,
+    stateId: 0,
+    cityId: 0,
+  });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -53,7 +59,6 @@ const UserData = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
-  
 
   const fetchUsers = async () => {
     const { data } = await axios.get(
@@ -62,8 +67,6 @@ const UserData = () => {
     setUserList(data);
     setFilteredUsers(data);
   };
-  
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -163,35 +166,51 @@ const UserData = () => {
   };
 
   const handelFilter = (e, type) => {
-
-    if(e.target.value == 0){
+    const value = e.target.value;
+  
+    if (value == 0) {
       setFilteredUsers(userList);
       return;
     }
-
-    let filter ;
-    switch(type){
+  
+    let filter;
+    switch (type) {
       case "countryId":
-        filter = userList.filter((user) => user.finalAdd.countryId == e.target.value);
-      setFilteredUsers(filter);
-      break;
+        setInput((prev) => ({ ...prev, countryId: value }));
+        filter = userList.filter(
+          (user) =>
+            user.finalAdd.countryId == value &&
+            (input.name
+              ? user.name.toLowerCase().includes(input.name.toLowerCase())
+              : true)
+        );
+        setFilteredUsers(filter);
+        break;
       case "stateId":
-        filter = userList.filter((user) => user.finalAdd.stateId == e.target.value);
-      setFilteredUsers(filter);
-      break;
+        filter = userList.filter((user) => user.finalAdd.stateId == value);
+        setFilteredUsers(filter);
+        break;
       case "cityId":
-        filter = userList.filter((user) => user.finalAdd.cityId == e.target.value);
-      setFilteredUsers(filter);
-      break;
+        filter = userList.filter((user) => user.finalAdd.cityId == value);
+        setFilteredUsers(filter);
+        break;
       case "name":
-         filter = userList.filter((user) => user.name.toLowerCase().includes(e.target.value.toLowerCase()));
-          setFilteredUsers(filter);
-      break;
+        setInput((prev) => ({ ...prev, name: value }));
+        filter = userList.filter((user) => {
+          return (
+            user.name.toLowerCase().includes(value.toLowerCase()) &&
+            (input.countryId != 0
+              ? user.finalAdd.countryId == input.countryId
+              : true)
+          );
+        });
+        setFilteredUsers(filter);
+        break;
       default:
         break;
     }
-
   };
+
 
   return (
     <div className="m-6">
@@ -201,10 +220,12 @@ const UserData = () => {
           type="text"
           placeholder="Search"
           className="border-2 pl-2 rounded-lg border-blue-gray-400"
+          value={input.name}
           onChange={(e) => handelFilter(e, "name")}
         />
 
         <select
+          value={input.countryId}
           onChange={(e) => handelFilter(e, "countryId")}
           className="bg-[#374151] h-10 p-2 text-white rounded-lg"
         >
@@ -220,12 +241,11 @@ const UserData = () => {
           className="bg-[#374151] h-10 p-2 text-white rounded-lg"
         >
           <option value={0}>Select State</option>
-          {stateOptions
-            .map((state) => (
-              <option key={state.stateId} value={state.stateId}>
-                {state.name}
-              </option>
-            ))}
+          {stateOptions.map((state) => (
+            <option key={state.stateId} value={state.stateId}>
+              {state.name}
+            </option>
+          ))}
         </select>
 
         {/* City Dropdown */}
@@ -234,12 +254,11 @@ const UserData = () => {
           className="bg-[#374151] h-10 p-2 text-white rounded-lg"
         >
           <option value={0}>Select City</option>
-          {cityOptions
-            .map((city) => (
-              <option key={city.cityId} value={city.cityId}>
-                {city.name}
-              </option>
-            ))}
+          {cityOptions.map((city) => (
+            <option key={city.cityId} value={city.cityId}>
+              {city.name}
+            </option>
+          ))}
         </select>
 
         <Button
